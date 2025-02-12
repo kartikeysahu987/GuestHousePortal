@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "63546996626",
+    "project_id": "guesthouseportal987",
+    "storage_bucket": "guesthouseportal987.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63546996626:android:26df1e8e8ed40da6a7734b",
+        "android_client_info": {
+          "package_name": "com.example.guesthouesportal1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9pxDGoMnz-AMTKVP-FV-pi8miogDqedo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63546996626:android:e52f486a79df0b85a7734b",
+        "android_client_info": {
+          "package_name": "com.example.guesthouseportal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9pxDGoMnz-AMTKVP-FV-pi8miogDqedo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
