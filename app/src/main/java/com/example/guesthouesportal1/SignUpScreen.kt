@@ -26,9 +26,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun SignUpScreen(navigateToLogin: () -> Unit) {
-    val authViewModel: AuthViewModel = viewModel()  // Get ViewModel here
+    val authViewModel: AuthViewModel = viewModel()
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
+    var gender by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
     val context = LocalContext.current
     val authState by authViewModel.authState.collectAsState()
 
@@ -52,10 +57,19 @@ fun SignUpScreen(navigateToLogin: () -> Unit) {
     ) {
         Text(text = "Sign Up", style = MaterialTheme.typography.headlineMedium)
 
+        OutlinedTextField(value = firstName, onValueChange = { firstName = it }, label = { Text("First Name") })
+        OutlinedTextField(value = lastName, onValueChange = { lastName = it }, label = { Text("Last Name") })
+        OutlinedTextField(value = phoneNumber, onValueChange = { phoneNumber = it }, label = { Text("Phone Number") })
+        OutlinedTextField(value = gender, onValueChange = { gender = it }, label = { Text("Gender") })
         OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
         OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, visualTransformation = PasswordVisualTransformation())
 
-        Button(onClick = { authViewModel.signUp(email, password) }) { Text("Sign Up") }
-        TextButton(onClick = navigateToLogin) { Text("Already have an account? Login") }
+        Button(onClick = { authViewModel.signUp(email, password, firstName, lastName, phoneNumber, gender) }) {
+            Text("Sign Up")
+        }
+
+        TextButton(onClick = navigateToLogin) {
+            Text("Already have an account? Login")
+        }
     }
 }

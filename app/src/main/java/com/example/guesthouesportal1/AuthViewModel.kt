@@ -11,10 +11,10 @@ class AuthViewModel(private val authRepository: AuthRepository = AuthRepository(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> = _authState
 
-    fun signUp(email: String, password: String) {
+    fun signUp(email: String, password: String, firstName: String, lastName: String, phoneNumber: String, gender: String) {
         _authState.value = AuthState.Loading
         viewModelScope.launch {
-            val result = authRepository.signUp(email, password)
+            val result = authRepository.signUp(email, password, firstName, lastName, phoneNumber, gender)
             _authState.value = result
         }
     }

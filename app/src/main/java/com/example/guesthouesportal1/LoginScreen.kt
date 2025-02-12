@@ -1,4 +1,5 @@
 package com.example.guesthouesportal1
+
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,10 +23,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun LoginScreen( navigateToSignUp: () -> Unit, navigateToForgotPassword: () -> Unit) {
+fun LoginScreen(
+    navigateToSignUp: () -> Unit,
+    navigateToForgotPassword: () -> Unit,
+    navController: NavController // Add this parameter to navigate to another screen
+) {
     val authViewModel: AuthViewModel = viewModel()  // Get ViewModel here
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -35,7 +41,12 @@ fun LoginScreen( navigateToSignUp: () -> Unit, navigateToForgotPassword: () -> U
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Success -> {
-                Toast.makeText(context, (authState as AuthState.Success).message, Toast.LENGTH_SHORT).show()
+                val message = (authState as AuthState.Success).message
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+
+                // Navigate to the Welcome Screen after successful login
+                val name = message.removePrefix("Welcome ")
+                navController.navigate("welcome_screen/$name")
             }
             is AuthState.Error -> {
                 Toast.makeText(context, (authState as AuthState.Error).error, Toast.LENGTH_SHORT).show()
@@ -56,13 +67,11 @@ fun LoginScreen( navigateToSignUp: () -> Unit, navigateToForgotPassword: () -> U
 
         Button(onClick = { authViewModel.login(email, password) }) { Text("Login") }
 
-        // Button to navigate to Sign Up screen
         TextButton(onClick = navigateToSignUp) { Text("Don't have an account? Sign Up") }
-
-        // Button to navigate to Forgot Password screen
         TextButton(onClick = navigateToForgotPassword) { Text("Forgot Password?") }
     }
 }
+
 
 @Composable
 fun ForgotPasswordScreen(navigateToLogin: () -> Unit) {
@@ -101,5 +110,16 @@ fun ForgotPasswordScreen(navigateToLogin: () -> Unit) {
         }
 
         TextButton(onClick = navigateToLogin) { Text("Back to Login") }
+    }
+}
+
+@Composable
+fun WelcomeScreen(name: String) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Welcome, $name!", style = MaterialTheme.typography.headlineMedium)
     }
 }
