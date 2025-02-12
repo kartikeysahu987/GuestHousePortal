@@ -1,5 +1,4 @@
 package com.example.guesthouesportal1
-
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,9 +22,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
-fun LoginScreen(authViewModel: AuthViewModel = viewModel(), navigateToSignUp: () -> Unit) {
+fun LoginScreen( navigateToSignUp: () -> Unit, navigateToForgotPassword: () -> Unit) {
+    val authViewModel: AuthViewModel = viewModel()  // Get ViewModel here
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -54,6 +55,51 @@ fun LoginScreen(authViewModel: AuthViewModel = viewModel(), navigateToSignUp: ()
         OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") }, visualTransformation = PasswordVisualTransformation())
 
         Button(onClick = { authViewModel.login(email, password) }) { Text("Login") }
+
+        // Button to navigate to Sign Up screen
         TextButton(onClick = navigateToSignUp) { Text("Don't have an account? Sign Up") }
+
+        // Button to navigate to Forgot Password screen
+        TextButton(onClick = navigateToForgotPassword) { Text("Forgot Password?") }
+    }
+}
+
+@Composable
+fun ForgotPasswordScreen(navigateToLogin: () -> Unit) {
+    var email by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Forgot Password", style = MaterialTheme.typography.headlineMedium)
+
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Enter your Email") }
+        )
+
+        Button(
+            onClick = {
+                // Call Firebase to send password reset email
+                FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Toast.makeText(context, "Password reset email sent!", Toast.LENGTH_SHORT).show()
+                            // Navigate back to login screen after successful request
+                            navigateToLogin()
+                        } else {
+                            Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+            }
+        ) {
+            Text("Send Password Reset Email")
+        }
+
+        TextButton(onClick = navigateToLogin) { Text("Back to Login") }
     }
 }
