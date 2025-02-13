@@ -15,13 +15,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -29,8 +27,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,40 +43,19 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.firebase.auth.FirebaseAuth
+
+// ------------------------------ ForgotPasswordScreen ------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SignUpScreen(navigateToLogin: () -> Unit) {
-    val authViewModel: AuthViewModel = viewModel()
-    var firstName by remember { mutableStateOf("") }
-    var lastName by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
-    var gender by remember { mutableStateOf("") }
+fun ForgotPasswordScreen(navigateToLogin: () -> Unit) {
     var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-
     var emailError by remember { mutableStateOf<String?>(null) }
-
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    val authState by authViewModel.authState.collectAsState()
-
-    LaunchedEffect(authState) {
-        when (authState) {
-            is AuthState.Success -> {
-                Toast.makeText(context, (authState as AuthState.Success).message, Toast.LENGTH_SHORT).show()
-                navigateToLogin()
-            }
-            is AuthState.Error -> {
-                Toast.makeText(context, (authState as AuthState.Error).error, Toast.LENGTH_SHORT).show()
-            }
-            else -> {}
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -113,9 +88,9 @@ fun SignUpScreen(navigateToLogin: () -> Unit) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Bold, gradient header for "Sign Up"
+                // Bold, gradient header for "Forgot Password"
                 Text(
-                    text = "Sign Up",
+                    text = "Forgot Password",
                     style = MaterialTheme.typography.headlineMedium.copy(
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
@@ -130,55 +105,14 @@ fun SignUpScreen(navigateToLogin: () -> Unit) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 OutlinedTextField(
-                    value = firstName,
-                    onValueChange = { firstName = it },
-                    label = { Text("First Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = lastName,
-                    onValueChange = { lastName = it },
-                    label = { Text("Last Name") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = phoneNumber,
-                    onValueChange = { phoneNumber = it },
-                    label = { Text("Phone Number") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = gender,
-                    onValueChange = { gender = it },
-                    label = { Text("Gender") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Email field with automatic lowercase conversion
-                OutlinedTextField(
                     value = email,
                     onValueChange = {
                         val lowerCaseEmail = it.lowercase()
                         email = lowerCaseEmail
                         emailError = if (lowerCaseEmail.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(lowerCaseEmail).matches())
-                            "Invalid email address" else null
+                            "Invalid email" else null
                     },
-                    label = { Text("Email") },
+                    label = { Text("Enter your Email") },
                     placeholder = { Text("example@mail.com") },
                     singleLine = true,
                     isError = emailError != null,
@@ -199,40 +133,32 @@ fun SignUpScreen(navigateToLogin: () -> Unit) {
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
-                    singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp)
-                )
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Button(
                     onClick = {
                         haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                        if (email.isBlank()) {
+                            emailError = "Email cannot be empty"
+                            return@Button
+                        }
                         keyboardController?.hide()
-                        authViewModel.signUp(email, password, firstName, lastName, phoneNumber, gender)
+                        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    Toast.makeText(context, "Password reset email sent!", Toast.LENGTH_SHORT).show()
+                                    navigateToLogin()
+                                } else {
+                                    Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                                }
+                            }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    enabled = authState !is AuthState.Loading
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    if (authState is AuthState.Loading) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    } else {
-                        Text("Sign Up")
-                    }
+                    Text("Send Password Reset Email")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -240,9 +166,11 @@ fun SignUpScreen(navigateToLogin: () -> Unit) {
                     onClick = navigateToLogin,
                     modifier = Modifier.semantics { contentDescription = "Navigate to Login" }
                 ) {
-                    Text("Already have an account? Login")
+                    Text("Back to Login")
                 }
             }
         }
     }
 }
+
+

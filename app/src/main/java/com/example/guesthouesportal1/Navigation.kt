@@ -1,12 +1,9 @@
+package com.example.guesthouesportal1
+
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.guesthouesportal1.AuthViewModel
-import com.example.guesthouesportal1.ForgotPasswordScreen
-import com.example.guesthouesportal1.LoginScreen
-import com.example.guesthouesportal1.SignUpScreen
-import com.example.guesthouesportal1.WelcomeScreen
 
 @Composable
 fun AppNavigation(authViewModel: AuthViewModel) {
@@ -21,17 +18,13 @@ fun AppNavigation(authViewModel: AuthViewModel) {
             )
         }
         composable("signup") {
-            SignUpScreen( navigateToLogin = { navController.navigate("login") })
+            SignUpScreen(navigateToLogin = { navController.navigate("login") })
         }
         composable("forgot_password") {
             ForgotPasswordScreen(navigateToLogin = { navController.navigate("login") })
         }
-
-        // Add composable for WelcomeScreen with dynamic argument
-        composable("welcome_screen/{name}") { backStackEntry ->
-            // Get the name parameter from the navigation back stack
-            val name = backStackEntry.arguments?.getString("name") ?: ""
-            WelcomeScreen(name = name)
+        composable("main_screen") {
+            MainScreen(navController) // Added main screen after login
         }
     }
 }
