@@ -24,7 +24,10 @@ fun AppNavigation(authViewModel: AuthViewModel) {
             ForgotPasswordScreen(navigateToLogin = { navController.navigate("login") })
         }
         composable("main_screen") {
-            MainScreen(navController) // Added main screen after login
+            MainScreen(navController) // Main Screen with drawer
+        }
+        composable("settings") {
+            SettingsScreen(navController) // Settings page for changing profile picture
         }
     }
 }
