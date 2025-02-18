@@ -3,8 +3,13 @@ package com.example.guesthouesportal1
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,12 +32,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
@@ -47,7 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 
-// ------------------------------ ForgotPasswordScreen ------------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ForgotPasswordScreen(navigateToLogin: () -> Unit) {
@@ -56,6 +62,21 @@ fun ForgotPasswordScreen(navigateToLogin: () -> Unit) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val keyboardController = LocalSoftwareKeyboardController.current
+
+    // Animate the form entrance
+    var formVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { formVisible = true }
+
+    // Bouncy header animation state
+    var headerScaleValue by remember { mutableStateOf(0.8f) }
+    LaunchedEffect(Unit) { headerScaleValue = 1f }
+    val headerScale by animateFloatAsState(
+        targetValue = headerScaleValue,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
 
     Box(
         modifier = Modifier
@@ -78,99 +99,115 @@ fun ForgotPasswordScreen(navigateToLogin: () -> Unit) {
                 )
             }
         ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(horizontal = 24.dp)
-                    .imePadding()
-                    .animateContentSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
+            // Wrap the form in an AnimatedVisibility block
+            AnimatedVisibility(
+                visible = formVisible,
+                enter = slideInVertically(
+                    initialOffsetY = { -100 },
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeIn(animationSpec = spring()),
+                exit = slideOutVertically() + fadeOut()
             ) {
-                // Bold, gradient header for "Forgot Password"
-                Text(
-                    text = "Forgot Password",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.secondary,
-                                MaterialTheme.colorScheme.primary
-                            )
-                        )
-                    )
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = {
-                        val lowerCaseEmail = it.lowercase()
-                        email = lowerCaseEmail
-                        emailError = if (lowerCaseEmail.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(lowerCaseEmail).matches())
-                            "Invalid email" else null
-                    },
-                    label = { Text("Enter your Email") },
-                    placeholder = { Text("example@mail.com") },
-                    singleLine = true,
-                    isError = emailError != null,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        autoCorrect = false,
-                        capitalization = KeyboardCapitalization.None
-                    ),
-                    keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
-                )
-                AnimatedVisibility(visible = emailError != null, enter = fadeIn(), exit = fadeOut()) {
-                    Text(
-                        text = emailError ?: "",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = {
-                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                        if (email.isBlank()) {
-                            emailError = "Email cannot be empty"
-                            return@Button
-                        }
-                        keyboardController?.hide()
-                        FirebaseAuth.getInstance().sendPasswordResetEmail(email)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    Toast.makeText(context, "Password reset email sent!", Toast.LENGTH_SHORT).show()
-                                    navigateToLogin()
-                                } else {
-                                    Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                    },
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(12.dp)
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 24.dp)
+                        .imePadding()
+                        .animateContentSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Send Password Reset Email")
-                }
-                Spacer(modifier = Modifier.height(16.dp))
+                    // Animated header text with bouncy scale
+                    Text(
+                        text = "Forgot Password",
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    MaterialTheme.colorScheme.secondary,
+                                    MaterialTheme.colorScheme.primary
+                                )
+                            )
+                        ),
+                        modifier = Modifier.scale(headerScale)
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
 
-                TextButton(
-                    onClick = navigateToLogin,
-                    modifier = Modifier.semantics { contentDescription = "Navigate to Login" }
-                ) {
-                    Text("Back to Login")
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = {
+                            val lowerCaseEmail = it.lowercase()
+                            email = lowerCaseEmail
+                            emailError = if (lowerCaseEmail.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(lowerCaseEmail).matches())
+                                "Invalid email" else null
+                        },
+                        label = { Text("Enter your Email") },
+                        placeholder = { Text("example@mail.com") },
+                        singleLine = true,
+                        isError = emailError != null,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            autoCorrect = false,
+                            capitalization = KeyboardCapitalization.None
+                        ),
+                        keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() })
+                    )
+                    AnimatedVisibility(
+                        visible = emailError != null,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        Text(
+                            text = emailError ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Button(
+                        onClick = {
+                            haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                            if (email.isBlank()) {
+                                emailError = "Email cannot be empty"
+                                return@Button
+                            }
+                            keyboardController?.hide()
+                            FirebaseAuth.getInstance().sendPasswordResetEmail(email)
+                                .addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        Toast.makeText(context, "Password reset email sent!", Toast.LENGTH_SHORT).show()
+                                        navigateToLogin()
+                                    } else {
+                                        Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Send Password Reset Email")
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    TextButton(
+                        onClick = navigateToLogin,
+                        modifier = Modifier.semantics { contentDescription = "Navigate to Login" }
+                    ) {
+                        Text("Back to Login")
+                    }
                 }
             }
         }
     }
 }
-
-

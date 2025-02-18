@@ -1,6 +1,11 @@
 package com.example.guesthouesportal1
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Help
@@ -95,7 +101,7 @@ fun MainScreen(navController: NavController) {
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(
-                modifier = Modifier.animateContentSize() // Smooth animations when content changes
+                modifier = Modifier.animateContentSize()
             ) {
                 // Drawer Header: Branding / User Profile Information
                 Column(
@@ -107,14 +113,7 @@ fun MainScreen(navController: NavController) {
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-//                        Icon(
-//                            imageVector = Icons.Filled.Home,
-//                            contentDescription = "User Profile",
-//                            modifier = Modifier
-//                                .size(64.dp)
-//                                .clip(CircleShape)
-//                        )
-//                        Spacer(modifier = Modifier.width(12.dp))
+                        // Optionally add a profile image here.
                         Column {
                             Text(
                                 text = "$firstName $lastName",
@@ -161,6 +160,18 @@ fun MainScreen(navController: NavController) {
                     icon = Icons.Filled.Help,
                     onClick = {
                         navController.navigate("help_support")
+                        scope.launch { drawerState.close() }
+                    }
+                )
+                // Logout item
+                DrawerItem(
+                    label = "Logout",
+                    icon = Icons.AutoMirrored.Filled.ExitToApp,
+                    onClick = {
+                        FirebaseAuth.getInstance().signOut()
+                        navController.navigate("login") {
+                            popUpTo("main_screen") { inclusive = true }
+                        }
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -220,19 +231,26 @@ fun MainScreen(navController: NavController) {
                 }
             }
         ) { innerPadding ->
-            // Main content area with centered welcome text
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
+            var contentVisible by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { contentVisible = true }
+            AnimatedVisibility(
+                visible = contentVisible,
+                enter = slideInVertically(initialOffsetY = { 100 }) + fadeIn(),
+                exit = slideOutVertically() + fadeOut()
             ) {
-                Text(
-                    text = "Welcome to the Guest House Portal!",
-                    style = MaterialTheme.typography.headlineMedium,
-                    textAlign = TextAlign.Center
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Welcome to the Guest House Portal!",
+                        style = MaterialTheme.typography.headlineMedium,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
     }
